@@ -1,0 +1,27 @@
+{{- if .Values.appDomain }}
+ingress:
+  enabled: true
+  className: "traefik-dev"
+  hosts:
+    - host: {{ .Values.appDomain | quote }}
+      paths:
+        - path: /
+          pathType: Prefix
+{{- end }}
+
+{{- if .Values.nodeEnvironment }}
+env:
+  NODE_ENV: {{ .Values.nodeEnvironment | quote }}
+{{- end }}
+
+commonLabels:
+  owner: is341s34
+
+{{- if .Values.replicaCount }}
+replicaCount: {{ .Values.replicaCount }}
+{{- end }}
+
+image:
+  repository: "cr.hawk.csc.sibsutis.ru/hawk-dev/is341s34-architekura-rp-polyakova-k"
+  tag: {{ .Values.imageTag | default "latest" | quote }}
+  pullPolicy: IfNotPresent

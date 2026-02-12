@@ -1,0 +1,96 @@
+stages:
+  - build
+  - diff-helmfile
+  - deploy-helmfile
+
+build-docker:
+  stage: build
+  image: docker:cli
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - docker login -u "$HAWK_REGISTRY_USER" -p "$HAWK_REGISTRY_PASSWORD" "$HAWK_REGISTRY"
+    - docker context create ci
+    - docker buildx create --name multiarch --use --driver docker-container ci
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        IMAGE_TAG=$CI_COMMIT_TAG
+      else
+        IMAGE_TAG=$CI_COMMIT_SHORT_SHA
+      fi
+    - docker buildx build --provenance=false --push --platform linux/arm64,linux/amd64 --tag $CI_REGISTRY_IMAGE:$IMAGE_TAG --tag $HAWK_REGISTRY_IMAGE:$IMAGE_TAG .
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $CI_COMMIT_BRANCH
+      when: manual
+
+.helmfile-pattern:
+  image: registry.csc.sibsutis.ru/csc-public/internal-container-images/k8s-tools:latest
+  before_script:
+    - echo "$KUBECONFIG_CONTENT" > /tmp/kubeconfig
+    - export KUBECONFIG=/tmp/kubeconfig
+    - export HELMFILE_FILE_PATH=helmfile.yaml.gotmpl
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+    - if: $CI_COMMIT_BRANCH
+      when: manual
+  dependencies:
+    - build-docker
+
+
+diff-helmfile:
+  extends: .helmfile-pattern
+  stage: diff-helmfile
+  parallel:
+    matrix:
+      - ENVIRONMENT: [dev, prod]
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        IMAGE_TAG=$CI_COMMIT_TAG
+      else
+        IMAGE_TAG=$CI_COMMIT_SHORT_SHA
+      fi
+      echo "Дифф для окружения: $ENVIRONMENT"
+      echo "образ: $HAWK_REGISTRY_IMAGE:$IMAGE_TAG"
+      
+      helmfile -e $ENVIRONMENT \
+        --namespace is341 \
+        --state-values-set imageRepository="$HAWK_REGISTRY_IMAGE" \
+        --state-values-set imageTag="$IMAGE_TAG" \
+        --state-values-set replicaCount=1 \
+        diff
+
+deploy-helmfile:
+  extends: .helmfile-pattern
+  stage: deploy-helmfile
+  parallel:
+    matrix:
+      - ENVIRONMENT: [dev, prod]
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        IMAGE_TAG=$CI_COMMIT_TAG
+      else
+        IMAGE_TAG=$CI_COMMIT_SHORT_SHA
+      fi
+
+      echo "Деплой в окружение: $ENVIRONMENT"
+      echo "Используется образ: $HAWK_REGISTRY_IMAGE:$IMAGE_TAG"
+
+      helmfile -e $ENVIRONMENT \
+        --namespace is341 \
+        --state-values-set imageRepository="$HAWK_REGISTRY_IMAGE" \
+        --state-values-set imageTag="$IMAGE_TAG" \
+        --state-values-set replicaCount=1 \
+        apply
+
+      if [ "$ENVIRONMENT" = "dev" ]; then
+        echo "Dev приложение доступно по: http://is341s34-app-dev.hawk-dev.csc.sibsutis.ru"
+      else
+        echo "Prod приложение доступно по: http://is341s34-app.hawk-dev.csc.sibsutis.ru"
+      fi

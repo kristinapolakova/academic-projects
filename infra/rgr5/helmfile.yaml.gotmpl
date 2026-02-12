@@ -1,0 +1,24 @@
+helmDefaults:
+  wait: true
+  timeout: 600
+  atomic: true
+  waitForJobs: true
+  historyMax: 4
+  createNamespace: false
+
+
+environments:
+  {{ .Environment.Name }}:
+    missingFileHandler: Warn
+    values: 
+      - env/{{ .Environment.Name }}/values.yml
+
+---
+
+releases:
+  - name: is341s34-app-{{ .Environment.Name }}
+    chart: ./is341s34-app
+    version: 0.1.0
+    namespace: "is341"
+    values:
+      - values/is341s34-app.yaml.gotmpl

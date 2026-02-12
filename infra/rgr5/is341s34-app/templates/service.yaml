@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "is341s34-app.fullname" . }}
+  namespace: is341  
+  labels:
+    {{- include "is341s34-app.labels" . | nindent 4 }}
+    owner: is341s34
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 3000 
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "is341s34-app.selectorLabels" . | nindent 4 }}

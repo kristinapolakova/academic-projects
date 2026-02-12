@@ -1,0 +1,6 @@
+apiVersion: v2
+name: is341s34-app
+description: A Helm chart for is341s34 Kubernetes application
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
