@@ -35,7 +35,7 @@
 *   **`infra/`** — инфраструктурные задачи:
     *   `Docker/` Развёртывание сервиса с использованием **Docker** и **Kubernetes**
     *   `LinuxOC/modules/` Написание модулей для ядра **Linux**
-    *   `LinuxOC/my_core` Сборка ядра **Linux**
+    *   `LinuxOC/my_core/` Сборка ядра **Linux**
 
 ---
 

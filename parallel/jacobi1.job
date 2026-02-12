@@ -1,0 +1,15 @@
+#!/bin/bash
+#SBATCH --job-name=jacobi
+#SBATCH --nodes=2
+#SBATCH --ntasks-per-node=32
+#SBATCH --partition=2288
+
+mpicc -O2 -o jacobi jacobi.c -lm
+
+mpirun -np 8 ./jacobi 70080
+mpirun -np 16 ./jacobi 70080
+mpirun -np 32 ./jacobi 70080
+
+mpirun -np 8 ./jacobi 28032
+mpirun -np 16 ./jacobi 28032
+mpirun -np 32 ./jacobi 28032

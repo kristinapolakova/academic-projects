@@ -1,0 +1,7 @@
+JACOBI: n=28032, processes=8, time=30.3083 sec, iter=100
+JACOBI: n=28032, processes=16, time=12.8708 sec, iter=100
+JACOBI: n=28032, processes=32, time=5.0372 sec, iter=100
+
+JACOBI: n=70048, processes=8, time=108.2693 sec, iter=100
+JACOBI: n=70048, processes=16, time=40.2546 sec, iter=100
+JACOBI: n=70048, processes=32, time=14.7736 sec, iter=100
